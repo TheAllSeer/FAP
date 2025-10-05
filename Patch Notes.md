@@ -26,6 +26,7 @@ this shows the volatility of the net gain/losses of the FAP stock over time.
 
 # Upcoming changes for V1.1:
 
+# Changes
 
 ## Home Page & Stock
 
@@ -35,4 +36,13 @@ this shows the volatility of the net gain/losses of the FAP stock over time.
 
 - when tapping a transaction, have it open up in a card. enable editing. 
 - enable adding transaction date (have the default be current date).
+
+## Add Transaction
+
+- button will be removed higher up to avoid conflicting with the android bar.
+
+# Fixes
+
+- Keyboard: fixing an issue where keyboard covers the content without ability to scroll. 
+(fix by increasing screen height when keyboard is open).
 
