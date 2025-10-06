@@ -46,3 +46,7 @@ this shows the volatility of the net gain/losses of the FAP stock over time.
 - Keyboard: fixing an issue where keyboard covers the content without ability to scroll. 
 (fix by increasing screen height when keyboard is open).
 
+- Splash-icon: it's still the square with the oily blackmouth face.
+
+- App icon: too zoomed in.
+
