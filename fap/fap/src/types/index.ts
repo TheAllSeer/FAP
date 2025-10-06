@@ -22,4 +22,4 @@ export interface Stats {
   avgPricePerPotion: number;
 }
 
-export type TabType = 'dashboard' | 'log' | 'stock';
+export type TabType = 'dashboard' | 'log';

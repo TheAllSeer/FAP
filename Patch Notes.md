@@ -35,7 +35,7 @@ this shows the volatility of the net gain/losses of the FAP stock over time.
 ## Transactions
 
 - when tapping a transaction, have it open up in a card. enable editing. 
-- enable adding transaction date (have the default be current date).
+- enable changing transaction date when adding transaction (have the default be current date).
 
 ## Add Transaction
 

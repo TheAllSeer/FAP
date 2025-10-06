@@ -9,44 +9,39 @@ import {
   Alert,
 } from 'react-native';
 import { Transaction } from '../types';
-import { DEFAULT_COSTS, AH_TAX, COLORS } from '../constants';
+import { AH_TAX, COLORS } from '../constants';
 
-interface AddTransactionModalProps {
+interface EditTransactionModalProps {
   visible: boolean;
+  transaction: Transaction;
   onClose: () => void;
-  onAdd: (transaction: Omit<Transaction, 'id'>) => void;
+  onSave: (transaction: Transaction) => void;
+  onDelete: (id: string) => void;
 }
 
-export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
+export const EditTransactionModal: React.FC<EditTransactionModalProps> = ({
   visible,
+  transaction,
   onClose,
-  onAdd,
+  onSave,
+  onDelete,
 }) => {
-  const [transactionType, setTransactionType] = useState<Transaction['type']>('fish_purchase');
-  const [quantity, setQuantity] = useState('');
-  const [costPerUnit, setCostPerUnit] = useState('');
-  const [transactionDate, setTransactionDate] = useState(new Date());
+  const [transactionType, setTransactionType] = useState<Transaction['type']>(transaction.type);
+  const [quantity, setQuantity] = useState(transaction.quantity.toString());
+  const [costPerUnit, setCostPerUnit] = useState(transaction.costPerUnit.toString());
+  const [transactionDate, setTransactionDate] = useState(new Date(transaction.timestamp));
   const [dateInput, setDateInput] = useState('');
 
   useEffect(() => {
     if (visible) {
-      const now = new Date();
-      setTransactionDate(now);
-      setDateInput(formatDateForInput(now));
+      setTransactionType(transaction.type);
+      setQuantity(transaction.quantity.toString());
+      setCostPerUnit(transaction.costPerUnit.toString());
+      const date = new Date(transaction.timestamp);
+      setTransactionDate(date);
+      setDateInput(formatDateForInput(date));
     }
-  }, [visible]);
-
-  useEffect(() => {
-    if (transactionType === 'fish_purchase') {
-      setCostPerUnit(DEFAULT_COSTS.fishBought.toString());
-    } else if (transactionType === 'kelp_purchase') {
-      setCostPerUnit(DEFAULT_COSTS.stranglekelp.toString());
-    } else if (transactionType === 'potion_sale') {
-      setCostPerUnit(DEFAULT_COSTS.potionSale.toString());
-    } else {
-      setCostPerUnit('0');
-    }
-  }, [transactionType]);
+  }, [visible, transaction]);
 
   const formatDateForInput = (date: Date): string => {
     const year = date.getFullYear();
@@ -73,7 +68,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     }
   };
 
-  const handleAdd = () => {
+  const handleSave = () => {
     const qty = parseInt(quantity);
     const cost = parseFloat(costPerUnit);
 
@@ -87,15 +82,17 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
       return;
     }
 
-    onAdd({
+    onSave({
+      ...transaction,
       type: transactionType,
       quantity: qty,
       costPerUnit: cost,
       timestamp: transactionDate.getTime(),
     });
+  };
 
-    setQuantity('');
-    onClose();
+  const handleDelete = () => {
+    onDelete(transaction.id);
   };
 
   const qty = parseInt(quantity) || 0;
@@ -116,7 +113,7 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
     >
       <View style={styles.modalOverlay}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalTitle}>Add Transaction</Text>
+          <Text style={styles.modalTitle}>Edit Transaction</Text>
 
           <Text style={styles.inputLabel}>Type</Text>
           <View style={styles.typeSelector}>
@@ -236,6 +233,12 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
 
           <View style={styles.modalButtons}>
             <TouchableOpacity
+              style={[styles.modalButton, styles.deleteButton]}
+              onPress={handleDelete}
+            >
+              <Text style={styles.deleteButtonText}>Delete</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[styles.modalButton, styles.cancelButton]}
               onPress={onClose}
             >
@@ -243,9 +246,9 @@ export const AddTransactionModal: React.FC<AddTransactionModalProps> = ({
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.modalButton, styles.saveButton]}
-              onPress={handleAdd}
+              onPress={handleSave}
             >
-              <Text style={styles.saveButtonText}>Add</Text>
+              <Text style={styles.saveButtonText}>Save</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -359,7 +362,7 @@ const styles = StyleSheet.create({
   },
   modalButtons: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
     marginTop: 24,
   },
   modalButton: {
@@ -367,6 +370,14 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 8,
     alignItems: 'center',
+  },
+  deleteButton: {
+    backgroundColor: COLORS.error,
+  },
+  deleteButtonText: {
+    color: COLORS.text,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   cancelButton: {
     backgroundColor: COLORS.border,

@@ -9,10 +9,18 @@ interface StockChartProps {
 }
 
 export const StockChart: React.FC<StockChartProps> = ({ stockHistory }) => {
+  const currentStock = stockHistory.length > 0 
+    ? stockHistory[stockHistory.length - 1].potions 
+    : 0;
+
   if (stockHistory.length === 0) {
     return (
       <View style={styles.container}>
-        <Text style={commonStyles.cardTitle}>Stock Over Time</Text>
+        <View style={styles.currentStockBanner}>
+          <Text style={styles.currentStockLabel}>Current Stock</Text>
+          <Text style={styles.currentStockValue}>0 potions</Text>
+        </View>
+        <Text style={styles.subtitle}>Stock Over Time</Text>
         <Text style={commonStyles.emptyText}>No stock data yet. Sell some potions!</Text>
       </View>
     );
@@ -20,7 +28,12 @@ export const StockChart: React.FC<StockChartProps> = ({ stockHistory }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={commonStyles.cardTitle}>Stock Over Time</Text>
+      <View style={styles.currentStockBanner}>
+        <Text style={styles.currentStockLabel}>Current Stock</Text>
+        <Text style={styles.currentStockValue}>{currentStock} potions</Text>
+      </View>
+      
+      <Text style={styles.subtitle}>Stock Over Time</Text>
       <View style={styles.chart}>
         {stockHistory.map((point, index) => (
           <View key={index} style={styles.chartPoint}>
@@ -51,13 +64,38 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.card,
     borderRadius: 12,
     padding: 16,
+    marginBottom: 16,
+  },
+  currentStockBanner: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 8,
+    padding: 16,
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  currentStockLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.background,
+    marginBottom: 4,
+  },
+  currentStockValue: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: COLORS.background,
+  },
+  subtitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: COLORS.textSecondary,
+    marginBottom: 12,
   },
   chart: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'space-around',
     height: 200,
-    marginTop: 20,
+    marginTop: 12,
   },
   chartPoint: {
     alignItems: 'center',

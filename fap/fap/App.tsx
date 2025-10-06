@@ -7,6 +7,7 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
+  Keyboard,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
@@ -18,15 +19,33 @@ import { Dashboard } from './src/components/Dashboard';
 import { TransactionList } from './src/components/TransactionList';
 import { StockChart } from './src/components/StockChart';
 import { AddTransactionModal } from './src/components/AddTransactionModal';
+import { EditTransactionModal } from './src/components/EditTransactionModal';
 
 export default function App() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stockHistory, setStockHistory] = useState<StockPoint[]>([]);
   const [modalVisible, setModalVisible] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
+  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     loadData();
+
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => setKeyboardHeight(e.endCoordinates.height)
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => setKeyboardHeight(0)
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
   }, []);
 
   const loadData = async () => {
@@ -36,11 +55,10 @@ export default function App() {
     setStockHistory(stockData);
   };
 
-  const handleAddTransaction = (transaction: Omit<Transaction, 'id' | 'timestamp'>) => {
+  const handleAddTransaction = (transaction: Omit<Transaction, 'id'>) => {
     const newTransaction: Transaction = {
       ...transaction,
       id: Date.now().toString(),
-      timestamp: Date.now(),
     };
 
     const newTransactions = [newTransaction, ...transactions];
@@ -49,7 +67,7 @@ export default function App() {
     if (transaction.type === 'potion_sale') {
       const currentStock = newStock.length > 0 ? newStock[newStock.length - 1].potions : 0;
       newStock.push({
-        timestamp: Date.now(),
+        timestamp: transaction.timestamp,
         potions: Math.max(0, currentStock - transaction.quantity),
       });
     }
@@ -57,6 +75,16 @@ export default function App() {
     setTransactions(newTransactions);
     setStockHistory(newStock);
     saveAll(newTransactions, newStock);
+  };
+
+  const handleEditTransaction = (updatedTransaction: Transaction) => {
+    const newTransactions = transactions.map(tx =>
+      tx.id === updatedTransaction.id ? updatedTransaction : tx
+    );
+    setTransactions(newTransactions);
+    saveAll(newTransactions, stockHistory);
+    setEditModalVisible(false);
+    setSelectedTransaction(null);
   };
 
   const handleDeleteTransaction = (id: string) => {
@@ -72,10 +100,17 @@ export default function App() {
             const newTransactions = transactions.filter(tx => tx.id !== id);
             setTransactions(newTransactions);
             saveAll(newTransactions, stockHistory);
+            setEditModalVisible(false);
+            setSelectedTransaction(null);
           },
         },
       ]
     );
+  };
+
+  const handleTransactionPress = (transaction: Transaction) => {
+    setSelectedTransaction(transaction);
+    setEditModalVisible(true);
   };
 
   const stats = calculateStats(transactions);
@@ -106,25 +141,28 @@ export default function App() {
             Transactions
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, currentTab === 'stock' && styles.tabActive]}
-          onPress={() => setCurrentTab('stock')}
-        >
-          <Text style={[styles.tabText, currentTab === 'stock' && styles.tabTextActive]}>
-            Stock
-          </Text>
-        </TouchableOpacity>
       </View>
 
-      <ScrollView style={styles.content}>
-        {currentTab === 'dashboard' && <Dashboard stats={stats} />}
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={[
+          styles.contentContainer,
+          keyboardHeight > 0 && { paddingBottom: keyboardHeight }
+        ]}
+        keyboardShouldPersistTaps="handled"
+      >
+        {currentTab === 'dashboard' && (
+          <>
+            <StockChart stockHistory={stockHistory} />
+            <Dashboard stats={stats} />
+          </>
+        )}
         {currentTab === 'log' && (
           <TransactionList
             transactions={transactions}
-            onDelete={handleDeleteTransaction}
+            onTransactionPress={handleTransactionPress}
           />
         )}
-        {currentTab === 'stock' && <StockChart stockHistory={stockHistory} />}
       </ScrollView>
 
       <TouchableOpacity
@@ -139,6 +177,19 @@ export default function App() {
         onClose={() => setModalVisible(false)}
         onAdd={handleAddTransaction}
       />
+
+      {selectedTransaction && (
+        <EditTransactionModal
+          visible={editModalVisible}
+          transaction={selectedTransaction}
+          onClose={() => {
+            setEditModalVisible(false);
+            setSelectedTransaction(null);
+          }}
+          onSave={handleEditTransaction}
+          onDelete={handleDeleteTransaction}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -191,6 +242,8 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
     padding: 16,
   },
   addButton: {
