@@ -62,6 +62,9 @@ this shows the volatility of the net gain/losses of the FAP stock over time.
 - can now edit transaction. 
 - delete function has been moved from holding the transaction down to the edit transaction card. 
 
+## Add Transaction
+- button has been moved further up to not overlap the android bar.
+
 ## Fixes
 - there were issues fixing the keyboard issue, it has been moved to release V1.2 
 - splash icon: it's only in the development build. 
