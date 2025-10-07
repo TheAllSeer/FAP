@@ -35,7 +35,7 @@ this shows the volatility of the net gain/losses of the FAP stock over time.
 ## Transactions
 
 - when tapping a transaction, have it open up in a card. enable editing. 
-- enable adding transaction date (have the default be current date).
+- enable changing transaction date when adding transaction (have the default be current date).
 
 ## Add Transaction
 
@@ -45,4 +45,36 @@ this shows the volatility of the net gain/losses of the FAP stock over time.
 
 - Keyboard: fixing an issue where keyboard covers the content without ability to scroll. 
 (fix by increasing screen height when keyboard is open).
+
+- Splash-icon: it's still the square with the oily blackmouth face.
+
+- App icon: too zoomed in.
+
+
+# V1.1:
+
+## Stock
+- this is now part of the homepage. 
+- stock tab removed.
+
+## Transactions
+- can now log desired transaction date. 
+- can now edit transaction. 
+- delete function has been moved from holding the transaction down to the edit transaction card. 
+
+## Add Transaction
+- button has been moved further up to not overlap the android bar.
+
+## Fixes
+- there were issues fixing the keyboard issue, it has been moved to release V1.2 
+- splash icon: it's only in the development build. 
+- app icon: still too zoomed in, working on it but have build cap so i don't want to over do it. created the icon, will see next build. 
+
+# Upcoming changes for V1.2:
+
+## Stock
+- make the stock like a ticker, not potion stock. lmao. 
+- Keyboard: fixing an issue where keyboard covers the content without ability to scroll. 
+(fix by increasing screen height when keyboard is open).
+
 

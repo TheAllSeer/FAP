@@ -6,19 +6,22 @@ import { COLORS, AH_TAX } from '../constants';
 
 interface TransactionListProps {
   transactions: Transaction[];
-  onDelete: (id: string) => void;
+  onTransactionPress: (transaction: Transaction) => void;
 }
 
 const getTransactionIcon = (type: Transaction['type']): string => {
   switch (type) {
-    case 'fish_purchase': return '🐟 Fish Purchase';
+    case 'fish_purchase': return '🟠 Fish Purchase';
     case 'fish_caught': return '🎣 Fish Caught';
     case 'kelp_purchase': return '🌿 Kelp Purchase';
     case 'potion_sale': return '💰 Potion Sale';
   }
 };
 
-export const TransactionList: React.FC<TransactionListProps> = ({ transactions, onDelete }) => {
+export const TransactionList: React.FC<TransactionListProps> = ({ 
+  transactions, 
+  onTransactionPress 
+}) => {
   if (transactions.length === 0) {
     return <Text style={commonStyles.emptyText}>No transactions yet. Add one to get started!</Text>;
   }
@@ -33,7 +36,7 @@ export const TransactionList: React.FC<TransactionListProps> = ({ transactions, 
           <TouchableOpacity
             key={tx.id}
             style={styles.transactionCard}
-            onLongPress={() => onDelete(tx.id)}
+            onPress={() => onTransactionPress(tx)}
           >
             <View style={styles.transactionHeader}>
               <Text style={styles.transactionType}>
