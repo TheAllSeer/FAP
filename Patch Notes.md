@@ -50,3 +50,22 @@ this shows the volatility of the net gain/losses of the FAP stock over time.
 
 - App icon: too zoomed in.
 
+
+# V1.1:
+
+## Stock
+- this is now part of the homepage. 
+- stock tab removed.
+
+## Transactions
+- can now log desired transaction date. 
+- can now edit transaction. 
+- delete function has been moved from holding the transaction down to the edit transaction card. 
+
+# Upcoming changes for V1.2:
+
+## Stock
+- make the stock like a ticker, not potion stock. lmao. 
+
+
+
