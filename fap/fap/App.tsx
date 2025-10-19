@@ -7,7 +7,8 @@ import {
   StyleSheet,
   SafeAreaView,
   Alert,
-  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
@@ -28,24 +29,9 @@ export default function App() {
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   const [currentTab, setCurrentTab] = useState<TabType>('dashboard');
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
 
   useEffect(() => {
     loadData();
-
-    const keyboardDidShowListener = Keyboard.addListener(
-      'keyboardDidShow',
-      (e) => setKeyboardHeight(e.endCoordinates.height)
-    );
-    const keyboardDidHideListener = Keyboard.addListener(
-      'keyboardDidHide',
-      () => setKeyboardHeight(0)
-    );
-
-    return () => {
-      keyboardDidShowListener.remove();
-      keyboardDidHideListener.remove();
-    };
   }, []);
 
   const loadData = async () => {
@@ -143,27 +129,30 @@ export default function App() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
-        style={styles.content}
-        contentContainerStyle={[
-          styles.contentContainer,
-          keyboardHeight > 0 && { paddingBottom: keyboardHeight }
-        ]}
-        keyboardShouldPersistTaps="handled"
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.flex}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        {currentTab === 'dashboard' && (
-          <>
-            <StockChart stockHistory={stockHistory} />
-            <Dashboard stats={stats} />
-          </>
-        )}
-        {currentTab === 'log' && (
-          <TransactionList
-            transactions={transactions}
-            onTransactionPress={handleTransactionPress}
-          />
-        )}
-      </ScrollView>
+        <ScrollView 
+          style={styles.content}
+          contentContainerStyle={styles.contentContainer}
+          keyboardShouldPersistTaps="handled"
+        >
+          {currentTab === 'dashboard' && (
+            <>
+              <StockChart transactions={transactions} />
+              <Dashboard stats={stats} />
+            </>
+          )}
+          {currentTab === 'log' && (
+            <TransactionList
+              transactions={transactions}
+              onTransactionPress={handleTransactionPress}
+            />
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
 
       <TouchableOpacity
         style={styles.addButton}
@@ -198,6 +187,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: COLORS.background,
+  },
+  flex: {
+    flex: 1,
   },
   header: {
     padding: 20,
@@ -245,6 +237,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
+    paddingBottom: 100,
   },
   addButton: {
     position: 'absolute',
