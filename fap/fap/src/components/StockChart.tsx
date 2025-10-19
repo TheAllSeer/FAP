@@ -1,59 +1,134 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { StockPoint } from '../types';
+import { Transaction } from '../types';
 import { commonStyles } from '../styles/commonStyles';
-import { COLORS } from '../constants';
+import { COLORS, AH_TAX } from '../constants';
 
 interface StockChartProps {
-  stockHistory: StockPoint[];
+  transactions: Transaction[];
 }
 
-export const StockChart: React.FC<StockChartProps> = ({ stockHistory }) => {
-  const currentStock = stockHistory.length > 0 
-    ? stockHistory[stockHistory.length - 1].potions 
-    : 0;
+interface ProfitPoint {
+  timestamp: number;
+  profit: number;
+  label: string;
+}
 
-  if (stockHistory.length === 0) {
+export const StockChart: React.FC<StockChartProps> = ({ transactions }) => {
+  // Calculate cumulative profit over time
+  const calculateProfitHistory = (): ProfitPoint[] => {
+    if (transactions.length === 0) return [];
+
+    // Sort transactions by timestamp (oldest first)
+    const sortedTransactions = [...transactions].sort((a, b) => a.timestamp - b.timestamp);
+    
+    const profitPoints: ProfitPoint[] = [];
+    let cumulativeProfit = 0;
+
+    sortedTransactions.forEach((tx) => {
+      switch (tx.type) {
+        case 'fish_purchase':
+          cumulativeProfit -= tx.quantity * tx.costPerUnit;
+          break;
+        case 'kelp_purchase':
+          cumulativeProfit -= tx.quantity * tx.costPerUnit;
+          break;
+        case 'potion_sale':
+          const afterTax = tx.quantity * tx.costPerUnit * (1 - AH_TAX);
+          cumulativeProfit += afterTax;
+          break;
+        case 'fish_caught':
+          // Fish caught doesn't affect actual profit, just savings
+          break;
+      }
+
+      profitPoints.push({
+        timestamp: tx.timestamp,
+        profit: cumulativeProfit,
+        label: new Date(tx.timestamp).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+        }),
+      });
+    });
+
+    return profitPoints;
+  };
+
+  const profitHistory = calculateProfitHistory();
+
+  if (profitHistory.length === 0) {
     return (
       <View style={styles.container}>
-        <View style={styles.currentStockBanner}>
-          <Text style={styles.currentStockLabel}>Current Stock</Text>
-          <Text style={styles.currentStockValue}>0 potions</Text>
+        <View style={styles.currentProfitBanner}>
+          <Text style={styles.currentProfitLabel}>Current Profit</Text>
+          <Text style={styles.currentProfitValue}>0.00g</Text>
         </View>
-        <Text style={styles.subtitle}>Stock Over Time</Text>
-        <Text style={commonStyles.emptyText}>No stock data yet. Sell some potions!</Text>
+        <Text style={styles.subtitle}>Profit Over Time</Text>
+        <Text style={commonStyles.emptyText}>No transactions yet. Start tracking your profits!</Text>
       </View>
     );
   }
 
+  const currentProfit = profitHistory[profitHistory.length - 1].profit;
+  const isPositive = currentProfit >= 0;
+
+  // Get min and max for scaling the chart
+  const profits = profitHistory.map(p => p.profit);
+  const minProfit = Math.min(...profits, 0);
+  const maxProfit = Math.max(...profits, 0);
+  const profitRange = maxProfit - minProfit;
+
+  // Take up to last 10 points for display
+  const displayPoints = profitHistory.slice(-10);
+
   return (
     <View style={styles.container}>
-      <View style={styles.currentStockBanner}>
-        <Text style={styles.currentStockLabel}>Current Stock</Text>
-        <Text style={styles.currentStockValue}>{currentStock} potions</Text>
+      <View style={[
+        styles.currentProfitBanner,
+        isPositive ? styles.profitPositive : styles.profitNegative
+      ]}>
+        <Text style={styles.currentProfitLabel}>Current Profit</Text>
+        <Text style={styles.currentProfitValue}>
+          {isPositive ? '+' : ''}{currentProfit.toFixed(2)}g
+        </Text>
       </View>
       
-      <Text style={styles.subtitle}>Stock Over Time</Text>
+      <Text style={styles.subtitle}>Profit Over Time</Text>
       <View style={styles.chart}>
-        {stockHistory.map((point, index) => (
-          <View key={index} style={styles.chartPoint}>
-            <View style={styles.chartBar}>
-              <View
-                style={[
-                  styles.chartBarFill,
-                  { height: `${Math.min(point.potions * 10, 100)}%` }
-                ]}
-              />
+        {displayPoints.map((point, index) => {
+          // Calculate bar height as percentage
+          let barHeight = 50; // Default to middle
+          
+          if (profitRange !== 0) {
+            const normalizedValue = ((point.profit - minProfit) / profitRange) * 100;
+            barHeight = Math.max(5, Math.min(95, normalizedValue));
+          }
+
+          const isPointPositive = point.profit >= 0;
+
+          return (
+            <View key={index} style={styles.chartPoint}>
+              <View style={styles.chartBar}>
+                <View style={styles.zeroLine} />
+                <View
+                  style={[
+                    styles.chartBarFill,
+                    isPointPositive ? styles.chartBarPositive : styles.chartBarNegative,
+                    { height: `${barHeight}%` }
+                  ]}
+                />
+              </View>
+              <Text style={[
+                styles.chartLabel,
+                isPointPositive ? styles.chartLabelPositive : styles.chartLabelNegative
+              ]}>
+                {point.profit >= 0 ? '+' : ''}{point.profit.toFixed(0)}
+              </Text>
+              <Text style={styles.chartDate}>{point.label}</Text>
             </View>
-            <Text style={styles.chartLabel}>{point.potions}</Text>
-            <Text style={styles.chartDate}>
-              {new Date(point.timestamp).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-              })}
-            </Text>
-          </View>
-        ))}
+          );
+        })}
       </View>
     </View>
   );
@@ -66,20 +141,25 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
   },
-  currentStockBanner: {
-    backgroundColor: COLORS.primary,
+  currentProfitBanner: {
     borderRadius: 8,
     padding: 16,
     alignItems: 'center',
     marginBottom: 16,
   },
-  currentStockLabel: {
+  profitPositive: {
+    backgroundColor: COLORS.success,
+  },
+  profitNegative: {
+    backgroundColor: COLORS.error,
+  },
+  currentProfitLabel: {
     fontSize: 14,
     fontWeight: '600',
     color: COLORS.background,
     marginBottom: 4,
   },
-  currentStockValue: {
+  currentProfitValue: {
     fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.background,
@@ -92,7 +172,7 @@ const styles = StyleSheet.create({
   },
   chart: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     justifyContent: 'space-around',
     height: 200,
     marginTop: 12,
@@ -108,17 +188,37 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     justifyContent: 'flex-end',
     overflow: 'hidden',
+    position: 'relative',
+  },
+  zeroLine: {
+    position: 'absolute',
+    top: '50%',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: COLORS.textMuted,
+    opacity: 0.5,
   },
   chartBarFill: {
     width: '100%',
-    backgroundColor: COLORS.primary,
     borderRadius: 4,
   },
+  chartBarPositive: {
+    backgroundColor: COLORS.success,
+  },
+  chartBarNegative: {
+    backgroundColor: COLORS.error,
+  },
   chartLabel: {
-    fontSize: 12,
-    color: COLORS.text,
+    fontSize: 11,
     marginTop: 4,
     fontWeight: '600',
+  },
+  chartLabelPositive: {
+    color: COLORS.success,
+  },
+  chartLabelNegative: {
+    color: COLORS.error,
   },
   chartDate: {
     fontSize: 10,
